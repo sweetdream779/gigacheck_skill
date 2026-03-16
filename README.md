@@ -27,7 +27,7 @@ Under the hood it runs:
 ## Quick Start
 
 ```bash
-git clone https://github.com/iitolstykh/gigacheck_skill
+git clone https://github.com/sweetdream779/gigacheck_skill
 cd gigacheck_skill
 claude
 ```
@@ -67,7 +67,7 @@ The model (~14GB for Mistral-7B) downloads automatically on first run.
 ### Automatic via `/setup` (recommended)
 
 ```bash
-git clone https://github.com/iitolstykh/gigacheck_skill
+git clone https://github.com/sweetdream779/gigacheck_skill
 cd gigacheck_skill
 claude
 # Type: /setup
@@ -87,7 +87,7 @@ The `/setup` command will:
 # 1. Install via npx
 npx skills add /path/to/gigacheck_skill
 # or from GitHub:
-npx skills add https://github.com/iitolstykh/gigacheck_skill
+npx skills add https://github.com/sweetdream779/gigacheck_skill
 
 # 2. Copy to Claude Code skills directory
 cp -r ~/.agents/skills/gigacheck_skill ~/.claude/skills/gigacheck_skill
@@ -107,7 +107,7 @@ Restart Claude Code — it will pick up the skill automatically.
 ### For other agents (Cursor, Codex, Gemini CLI, etc.)
 
 ```bash
-npx skills add https://github.com/iitolstykh/gigacheck_skill
+npx skills add https://github.com/sweetdream779/gigacheck_skill
 ```
 
 This installs to `~/.agents/skills/gigacheck_skill` and runs `install.sh` automatically.

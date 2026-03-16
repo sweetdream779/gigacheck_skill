@@ -110,7 +110,7 @@ Or for batch (folder):
 ### Quick install (Claude Code)
 
 ```bash
-git clone https://github.com/iitolstykh/gigacheck_skill
+git clone https://github.com/sweetdream779/gigacheck_skill
 cd gigacheck_skill
 claude
 # Type: /setup
