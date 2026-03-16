@@ -7,7 +7,7 @@ Uses GigaCheck-Classifier-Multi (Mistral-7B) via the Transformers API (trust_rem
 
 Pipeline:
   1. Detect language (only EN and RU are supported)
-  2. Truncate text to first 1024 tokens
+  2. Truncate text to first model.config.max_length tokens
   3. Run GigaCheck-Classifier-Multi for binary classification: AI / human
   4. Output structured JSON
 
@@ -30,7 +30,6 @@ from transformers import AutoModel, AutoTokenizer
 # ── Constants ──────────────────────────────────────────────────────────────────
 
 MODEL_ID = "iitolstykh/GigaCheck-Classifier-Multi"
-MAX_TOKENS = 1024
 SUPPORTED_LANGUAGES = {"en", "ru"}
 
 
@@ -48,8 +47,9 @@ def load_model(device: str):
     )
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     model.eval()
-    print("✅ Model loaded.", file=sys.stderr)
-    return model, tokenizer
+    max_tokens = getattr(model.config, "max_length", 1024)
+    print(f"✅ Model loaded. Max sequence length: {max_tokens} tokens.", file=sys.stderr)
+    return model, tokenizer, max_tokens
 
 
 # ── Language detection ─────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ def check_language(text: str) -> str:
 
 # ── Text preprocessing ─────────────────────────────────────────────────────────
 
-def truncate_to_tokens(text: str, tokenizer, max_tokens: int = MAX_TOKENS) -> tuple[str, int]:
+def truncate_to_tokens(text: str, tokenizer, max_tokens: int) -> tuple[str, int]:
     """
     Truncate text to at most max_tokens tokens.
     Returns (truncated_text, actual_token_count).
@@ -110,7 +110,7 @@ def truncate_to_tokens(text: str, tokenizer, max_tokens: int = MAX_TOKENS) -> tu
 
 # ── Inference ──────────────────────────────────────────────────────────────────
 
-def classify_text(model, tokenizer, text: str) -> tuple[str, float, int]:
+def classify_text(model, tokenizer, text: str, max_tokens: int) -> tuple[str, float, int]:
     """
     Run GigaCheck classification on a single text.
     Returns (label, confidence, tokens_used).
@@ -119,8 +119,8 @@ def classify_text(model, tokenizer, text: str) -> tuple[str, float, int]:
     # Normalize newlines as per model recommendation
     normalized = text.replace("\n", " ")
 
-    # Truncate to max 1024 tokens
-    truncated, tokens_used = truncate_to_tokens(normalized, tokenizer, MAX_TOKENS)
+    # Truncate to model's max_length tokens
+    truncated, tokens_used = truncate_to_tokens(normalized, tokenizer, max_tokens)
 
     with torch.no_grad():
         output = model([truncated])
@@ -144,10 +144,10 @@ def classify_text(model, tokenizer, text: str) -> tuple[str, float, int]:
 
 # ── Single text pipeline ───────────────────────────────────────────────────────
 
-def process_text(model, tokenizer, text: str) -> dict:
+def process_text(model, tokenizer, text: str, max_tokens: int) -> dict:
     """Full pipeline for a single text string."""
     lang = check_language(text)
-    label, confidence, tokens_used = classify_text(model, tokenizer, text)
+    label, confidence, tokens_used = classify_text(model, tokenizer, text, max_tokens)
 
     result = {
         "label": label,
@@ -159,7 +159,7 @@ def process_text(model, tokenizer, text: str) -> dict:
     return result
 
 
-def process_file(model, tokenizer, file_path: str) -> dict:
+def process_file(model, tokenizer, file_path: str, max_tokens: int) -> dict:
     """Read a text file and classify it."""
     path = Path(file_path)
     if not path.is_file():
@@ -173,10 +173,10 @@ def process_file(model, tokenizer, file_path: str) -> dict:
         sys.exit(1)
 
     print(f"Processing file: {path.name}", file=sys.stderr)
-    return process_text(model, tokenizer, text)
+    return process_text(model, tokenizer, text, max_tokens)
 
 
-def process_folder(model, tokenizer, folder_path: str) -> dict:
+def process_folder(model, tokenizer, folder_path: str, max_tokens: int) -> dict:
     """Classify all .txt files in a folder."""
     folder = Path(folder_path)
     if not folder.is_dir():
@@ -203,7 +203,7 @@ def process_folder(model, tokenizer, folder_path: str) -> dict:
             }
             print(f"  ⚠️ Skipped: unsupported language '{lang}'", file=sys.stderr)
             continue
-        label, confidence, tokens_used = classify_text(model, tokenizer, text)
+        label, confidence, tokens_used = classify_text(model, tokenizer, text, max_tokens)
         results[txt_file.name] = {
             "label": label,
             "confidence": confidence,
@@ -232,18 +232,18 @@ def main():
     )
     args = parser.parse_args()
 
-    model, tokenizer = load_model(args.device)
+    model, tokenizer, max_tokens = load_model(args.device)
 
     if args.text:
-        result = process_text(model, tokenizer, args.text)
+        result = process_text(model, tokenizer, args.text, max_tokens)
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.file:
-        result = process_file(model, tokenizer, args.file)
+        result = process_file(model, tokenizer, args.file, max_tokens)
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
     elif args.folder:
-        results = process_folder(model, tokenizer, args.folder)
+        results = process_folder(model, tokenizer, args.folder, max_tokens)
         print(json.dumps(results, ensure_ascii=False, indent=2))
 
 
