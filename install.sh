@@ -42,7 +42,8 @@ fi
 echo ""
 echo "📥 Installing dependencies..."
 
-"$VENV_DIR/bin/pip" install --upgrade pip setuptools --quiet
+# Pin setuptools<81: gigacheck's setup.py uses pkg_resources, removed in setuptools 81+
+"$VENV_DIR/bin/pip" install --upgrade pip "setuptools<81" wheel --quiet
 
 # PyTorch 2.5.1: try CUDA first, fall back to CPU-only
 "$VENV_DIR/bin/pip" install "torch==2.5.1" \
@@ -58,9 +59,11 @@ echo "📥 Installing dependencies..."
     --quiet
 
 # GigaCheck library (provides trust_remote_code model classes)
+# --no-build-isolation: use venv's pinned setuptools (with pkg_resources)
+# instead of pip downloading the latest setuptools into an isolated build env
 "$VENV_DIR/bin/pip" install \
     "git+https://github.com/ai-forever/gigacheck" \
-    --quiet
+    --no-build-isolation --quiet
 
 echo "✅ Dependencies installed"
 

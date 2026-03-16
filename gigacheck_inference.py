@@ -38,11 +38,11 @@ SUPPORTED_LANGUAGES = {"en", "ru"}
 def load_model(device: str):
     """Load GigaCheck model and tokenizer via Transformers API."""
     print(f"Loading GigaCheck model {MODEL_ID}...", file=sys.stderr)
-    dtype = torch.bfloat16 if device == "cuda" else torch.float32
+    # dtype = torch.bfloat16 if device == "cuda" else torch.float32
     model = AutoModel.from_pretrained(
         MODEL_ID,
         trust_remote_code=True,
-        torch_dtype=dtype,
+        torch_dtype="auto",
         device_map=device,
     )
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
