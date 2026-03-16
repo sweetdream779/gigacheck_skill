@@ -1,0 +1,12 @@
+# Versions pinned to match HuggingFace model config:
+# - https://huggingface.co/iitolstykh/GigaCheck-Classifier-Multi
+#   "transformers_version": "4.55.0"
+
+torch==2.5.1
+transformers==4.55.0
+accelerate==1.8.1
+huggingface_hub
+langdetect
+numpy
+# GigaCheck library (required for trust_remote_code model)
+git+https://github.com/ai-forever/gigacheck
